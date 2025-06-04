@@ -44,6 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
         tableLinkType: document.getElementById('tableLinkType')
     };
     
+    // Checkbox fields
+    const checkboxFields = ['r', 'u', 'p', 'h', 'i', 'd', 'm', 'g', 'x'];
+    
     // Event listeners
     saveBtn.addEventListener('click', saveRecord);
     addNewBtn.addEventListener('click', addNewRecord);
@@ -181,6 +184,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             headers.forEach((header, index) => {
                 record[header] = values[index] ? values[index].trim() : '';
+                
+                // Convert '1'/'0' to boolean for checkbox fields
+                if (checkboxFields.includes(header.toLowerCase())) {
+                    record[header] = record[header] === '1';
+                }
             });
             
             records.push(record);
@@ -274,11 +282,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         records.forEach(record => {
             const row = headers.map(header => {
-                let value = record[header] || '';
+                let value = record[header];
+                
+                // Convert boolean to '1'/'0' for checkbox fields
+                if (checkboxFields.includes(header.toLowerCase())) {
+                    value = value ? '1' : '0';
+                } else {
+                    value = value || '';
+                }
+                
                 // Handle values with commas by enclosing in quotes
-                if (value.includes(',')) {
+                if (typeof value === 'string' && value.includes(',')) {
                     value = `"${value}"`;
                 }
+                
                 return value;
             });
             csvContent += row.join(',') + '\n';
@@ -297,7 +314,20 @@ document.addEventListener('DOMContentLoaded', function() {
             
             headers.forEach(header => {
                 const cell = document.createElement('td');
-                cell.textContent = record[header] || '';
+                
+                // Display checkboxes as ✓ or ✗
+                if (checkboxFields.includes(header.toLowerCase())) {
+                    if (record[header]) {
+                        cell.innerHTML = '✓';
+                        cell.className = 'check-mark';
+                    } else {
+                        cell.innerHTML = '✗';
+                        cell.className = 'x-mark';
+                    }
+                } else {
+                    cell.textContent = record[header] || '';
+                }
+                
                 row.appendChild(cell);
             });
             
@@ -326,23 +356,26 @@ document.addEventListener('DOMContentLoaded', function() {
     function populateForm(record) {
         currentEditingId = record.Id;
         
+        // Set text fields
         formFields.id.value = record.Id || '';
         formFields.name.value = record.Name || '';
         formFields.variable.value = record.Variable || '';
         formFields.category.value = record.Category || '';
         formFields.tableType.value = record['Table Type'] || '';
-        formFields.r.value = record.R || '';
-        formFields.u.value = record.U || '';
-        formFields.p.value = record.P || '';
-        formFields.h.value = record.H || '';
-        formFields.i.value = record.I || '';
-        formFields.d.value = record.D || '';
-        formFields.m.value = record.M || '';
-        formFields.g.value = record.G || '';
-        formFields.x.value = record.X || '';
         formFields.jj.value = record.JJ || '';
         formFields.kType.value = record.KType || '';
         formFields.tableLinkType.value = record['Table Link Type'] || '';
+        
+        // Set checkbox fields
+        formFields.r.checked = !!record.R;
+        formFields.u.checked = !!record.U;
+        formFields.p.checked = !!record.P;
+        formFields.h.checked = !!record.H;
+        formFields.i.checked = !!record.I;
+        formFields.d.checked = !!record.D;
+        formFields.m.checked = !!record.M;
+        formFields.g.checked = !!record.G;
+        formFields.x.checked = !!record.X;
     }
     
     // Clear the form
@@ -364,15 +397,15 @@ document.addEventListener('DOMContentLoaded', function() {
             Variable: formFields.variable.value,
             Category: formFields.category.value,
             'Table Type': formFields.tableType.value,
-            R: formFields.r.value,
-            U: formFields.u.value,
-            P: formFields.p.value,
-            H: formFields.h.value,
-            I: formFields.i.value,
-            D: formFields.d.value,
-            M: formFields.m.value,
-            G: formFields.g.value,
-            X: formFields.x.value,
+            R: formFields.r.checked,
+            U: formFields.u.checked,
+            P: formFields.p.checked,
+            H: formFields.h.checked,
+            I: formFields.i.checked,
+            D: formFields.d.checked,
+            M: formFields.m.checked,
+            G: formFields.g.checked,
+            X: formFields.x.checked,
             JJ: formFields.jj.value,
             KType: formFields.kType.value,
             'Table Link Type': formFields.tableLinkType.value
