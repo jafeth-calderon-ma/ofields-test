@@ -407,6 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteBtn.addEventListener('click', () => deleteRecord(record.Id));
             
             actionsCell.appendChild(editBtn);
+            actionsCell.appendChild(document.createTextNode(' ')); // Add space between buttons
             actionsCell.appendChild(deleteBtn);
             row.appendChild(actionsCell);
             
@@ -419,13 +420,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (checkboxFields.includes(header.toLowerCase())) {
                     if (record[header]) {
                         cell.innerHTML = '✓';
-                        cell.className = 'check-mark data-column';
+                        cell.className = 'check-mark';
                     } else {
                         cell.innerHTML = '✗';
-                        cell.className = 'x-mark data-column';
+                        cell.className = 'x-mark';
                     }
                 } else {
-                    cell.textContent = record[header] || '';
+                    const value = record[header] || '';
+                    cell.textContent = value;
+                    // Add title attribute for tooltip on hover
+                    if (value) {
+                        cell.title = value;
+                    }
                 }
                 
                 row.appendChild(cell);

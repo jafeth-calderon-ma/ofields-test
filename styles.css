@@ -93,8 +93,8 @@ button:hover {
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 1200px; /* Increased minimum width */
-    table-layout: fixed; /* Fixed layout helps with column sizing */
+    min-width: 1200px; 
+    table-layout: auto; /* Changed from fixed to auto to allow content-based sizing */
 }
 
 thead {
@@ -105,14 +105,39 @@ th, td {
     padding: 8px 12px;
     border: 1px solid #ddd;
     text-align: left;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 100px; /* Minimum width for columns */
+    white-space: nowrap; /* Prevent text wrapping */
+    min-width: 120px; /* Increased minimum width for columns */
+    max-width: none; /* Remove max-width restriction */
 }
 
-tr:nth-child(even) {
+/* Make sure checkbox columns are narrower */
+.check-mark, .x-mark {
+    width: 60px;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* Actions column styling */
+.actions-column {
+    width: 150px; /* Increased width to fit both buttons */
+    min-width: 150px; /* Ensure minimum width */
+    position: sticky;
+    left: 0;
     background-color: #f9f9f9;
+    z-index: 1;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    white-space: nowrap;
+}
+
+.actions-column button {
+    display: inline-block;
+    margin: 2px;
+    width: auto;
+    padding: 5px 8px;
+}
+
+thead .actions-column {
+    background-color: #f2f2f2;
 }
 
 .edit-btn, .delete-btn {
@@ -126,174 +151,24 @@ tr:nth-child(even) {
 
 .delete-btn {
     background-color: #f44336;
+    display: inline-block; /* Ensure buttons display inline */
 }
 
-.status-message {
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 4px;
-    display: none;
-}
-
-.success {
-    display: block;
-    background-color: #dff0d8;
-    color: #3c763d;
-    border: 1px solid #d6e9c6;
-}
-
-.error {
-    display: block;
-    background-color: #f2dede;
-    color: #a94442;
-    border: 1px solid #ebccd1;
-}
-
-.checkbox-group {
-    flex-direction: row;
-    align-items: center;
-}
-
-.checkbox-group label {
-    margin-right: 10px;
-    margin-bottom: 0;
-}
-
-.checkbox-group input[type="checkbox"] {
-    width: auto;
-    margin-left: 10px;
-    transform: scale(1.2);
-}
-
-.check-mark {
-    color: #4CAF50;
-    font-weight: bold;
-    text-align: center;
-    width: 60px;
-    min-width: 60px;
-}
-
-.x-mark {
-    color: #f44336;
-    font-weight: bold;
-    text-align: center;
-    width: 60px;
-    min-width: 60px;
-}
-
-.checkbox-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-top: 5px;
-}
-
-.checkbox-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.checkbox-item label {
-    font-weight: normal;
-    margin-bottom: 0;
-    margin-right: 2px;
-}
-
-.checkbox-item input[type="checkbox"] {
-    width: auto;
-    transform: scale(1.2);
-    margin: 0;
-}
-
-/* Styles for dropdown selects */
-select {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    width: 100%;
-    background-color: white;
-}
-
-/* Styles for radio buttons */
-.radio-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 5px;
-}
-
-.radio-group label {
-    display: flex;
-    align-items: center;
-    font-weight: normal;
-    cursor: pointer;
-}
-
-.radio-group input[type="radio"] {
-    margin-right: 8px;
-}
-
-/* Category specific section styles */
-.category-fields {
-    margin: 10px 0;
-    padding: 15px;
-    border: 1px solid #eee;
-    border-radius: 5px;
-    background-color: #fafafa;
-}
-
-/* Add a subtle header for each category section */
-.category-fields::before {
-    content: attr(data-category);
-    display: block;
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #555;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 5px;
-}
-
-.scalar-fields::before {
-    content: "Scalar Properties";
-}
-
-.vector-fields::before {
-    content: "Vector Properties";
-}
-
-.table-fields::before {
-    content: "Table Properties";
-}
-
-.actions-column {
-    width: 120px;
-    min-width: 120px;
-    position: sticky;
-    left: 0;
-    background-color: #f9f9f9;
-    z-index: 1;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-}
-
-thead .actions-column {
-    background-color: #f2f2f2;
-}
-
-/* Column widths for specific fields */
+/* Remove fixed widths for specific columns */
 th:nth-child(2), td:nth-child(2) { /* ID column */
-    width: 80px;
     min-width: 80px;
+    width: auto;
 }
 
 th:nth-child(3), td:nth-child(3) { /* Name column */
-    width: 150px;
     min-width: 150px;
+    width: auto;
 }
 
-/* Improve tooltip for truncated content */
-td:hover {
+/* Add hover tooltips for cells with potentially truncated text */
+td {
     position: relative;
+    overflow: visible; /* Changed from hidden to visible */
 }
 
 td[title]:hover::after {
