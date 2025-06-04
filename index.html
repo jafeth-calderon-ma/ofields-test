@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OFields Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>OFields Manager</h1>
+        
+        <!-- GitHub Authentication Section -->
+        <div class="section" id="auth-section">
+            <h2>GitHub Authentication</h2>
+            <div class="auth-container">
+                <div class="form-group">
+                    <label for="repo-owner">Repository Owner:</label>
+                    <input type="text" id="repo-owner" placeholder="e.g., username">
+                </div>
+                <div class="form-group">
+                    <label for="repo-name">Repository Name:</label>
+                    <input type="text" id="repo-name" placeholder="e.g., repo-name">
+                </div>
+                <div class="form-group">
+                    <label for="github-token">Personal Access Token:</label>
+                    <input type="password" id="github-token" placeholder="GitHub Personal Access Token">
+                </div>
+                <div class="form-group">
+                    <label for="branch-name">Branch Name:</label>
+                    <input type="text" id="branch-name" value="main">
+                </div>
+                <button id="saveAuthBtn">Save Authentication</button>
+                <div id="auth-status" class="status-message"></div>
+            </div>
+        </div>
+        
+        <!-- File Input Section -->
+        <div class="section">
+            <h2>Load CSV File</h2>
+            <input type="file" id="csvFile" accept=".csv">
+            <button id="loadBtn">Load CSV</button>
+        </div>
+        
+        <!-- Search Section -->
+        <div class="section">
+            <h2>Search Record</h2>
+            <div class="search-container">
+                <input type="text" id="searchId" placeholder="Enter ID to search">
+                <button id="searchBtn">Search</button>
+            </div>
+        </div>
+        
+        <!-- Edit Form Section -->
+        <div class="section">
+            <h2>Edit Record</h2>
+            <form id="recordForm">
+                <div class="form-group">
+                    <label for="id">Id:</label>
+                    <input type="text" id="id" required>
+                </div>
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name">
+                </div>
+                <div class="form-group">
+                    <label for="variable">Variable:</label>
+                    <input type="text" id="variable">
+                </div>
+                <div class="form-group">
+                    <label for="category">Category:</label>
+                    <input type="text" id="category">
+                </div>
+                <div class="form-group">
+                    <label for="tableType">Table Type:</label>
+                    <input type="text" id="tableType">
+                </div>
+                <div class="form-group">
+                    <label for="r">R:</label>
+                    <input type="text" id="r">
+                </div>
+                <div class="form-group">
+                    <label for="u">U:</label>
+                    <input type="text" id="u">
+                </div>
+                <div class="form-group">
+                    <label for="p">P:</label>
+                    <input type="text" id="p">
+                </div>
+                <div class="form-group">
+                    <label for="h">H:</label>
+                    <input type="text" id="h">
+                </div>
+                <div class="form-group">
+                    <label for="i">I:</label>
+                    <input type="text" id="i">
+                </div>
+                <div class="form-group">
+                    <label for="d">D:</label>
+                    <input type="text" id="d">
+                </div>
+                <div class="form-group">
+                    <label for="m">M:</label>
+                    <input type="text" id="m">
+                </div>
+                <div class="form-group">
+                    <label for="g">G:</label>
+                    <input type="text" id="g">
+                </div>
+                <div class="form-group">
+                    <label for="x">X:</label>
+                    <input type="text" id="x">
+                </div>
+                <div class="form-group">
+                    <label for="jj">JJ:</label>
+                    <input type="text" id="jj">
+                </div>
+                <div class="form-group">
+                    <label for="kType">KType:</label>
+                    <input type="text" id="kType">
+                </div>
+                <div class="form-group">
+                    <label for="tableLinkType">Table Link Type:</label>
+                    <input type="text" id="tableLinkType">
+                </div>
+                <div class="button-group">
+                    <button type="button" id="saveBtn">Save Record</button>
+                    <button type="button" id="addNewBtn">Add New Record</button>
+                    <button type="button" id="clearBtn">Clear Form</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Records Display Section -->
+        <div class="section">
+            <h2>All Records</h2>
+            <div class="table-container">
+                <table id="recordsTable">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>Variable</th>
+                            <th>Category</th>
+                            <th>Table Type</th>
+                            <th>R</th>
+                            <th>U</th>
+                            <th>P</th>
+                            <th>H</th>
+                            <th>I</th>
+                            <th>D</th>
+                            <th>M</th>
+                            <th>G</th>
+                            <th>X</th>
+                            <th>JJ</th>
+                            <th>KType</th>
+                            <th>Table Link Type</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Save File Section -->
+        <div class="section">
+            <h2>Save to Repository</h2>
+            <div class="commit-container">
+                <div class="form-group">
+                    <label for="commit-message">Commit Message:</label>
+                    <input type="text" id="commit-message" placeholder="Enter a commit message" value="Update ofields.csv">
+                </div>
+                <button id="commitBtn">Commit Changes</button>
+                <div id="commit-status" class="status-message"></div>
+            </div>
+            <button id="downloadBtn">Download CSV</button>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/js-base64@3.7.2/base64.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
