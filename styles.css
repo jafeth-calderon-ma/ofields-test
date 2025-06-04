@@ -87,12 +87,14 @@ button:hover {
 
 .table-container {
     overflow-x: auto;
+    margin-bottom: 20px;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 600px;
+    min-width: 1200px; /* Increased minimum width */
+    table-layout: fixed; /* Fixed layout helps with column sizing */
 }
 
 thead {
@@ -103,6 +105,10 @@ th, td {
     padding: 8px 12px;
     border: 1px solid #ddd;
     text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 100px; /* Minimum width for columns */
 }
 
 tr:nth-child(even) {
@@ -163,12 +169,16 @@ tr:nth-child(even) {
     color: #4CAF50;
     font-weight: bold;
     text-align: center;
+    width: 60px;
+    min-width: 60px;
 }
 
 .x-mark {
     color: #f44336;
     font-weight: bold;
     text-align: center;
+    width: 60px;
+    min-width: 60px;
 }
 
 .checkbox-row {
@@ -254,6 +264,51 @@ select {
 
 .table-fields::before {
     content: "Table Properties";
+}
+
+.actions-column {
+    width: 120px;
+    min-width: 120px;
+    position: sticky;
+    left: 0;
+    background-color: #f9f9f9;
+    z-index: 1;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+thead .actions-column {
+    background-color: #f2f2f2;
+}
+
+/* Column widths for specific fields */
+th:nth-child(2), td:nth-child(2) { /* ID column */
+    width: 80px;
+    min-width: 80px;
+}
+
+th:nth-child(3), td:nth-child(3) { /* Name column */
+    width: 150px;
+    min-width: 150px;
+}
+
+/* Improve tooltip for truncated content */
+td:hover {
+    position: relative;
+}
+
+td[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 0;
+    top: 100%;
+    background-color: #333;
+    color: white;
+    padding: 5px;
+    border-radius: 3px;
+    z-index: 2;
+    max-width: 300px;
+    word-wrap: break-word;
+    white-space: normal;
 }
 
 @media (max-width: 768px) {

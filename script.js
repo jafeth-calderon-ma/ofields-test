@@ -86,6 +86,14 @@ document.addEventListener('DOMContentLoaded', function() {
     clearBtn.addEventListener('click', clearForm);
     saveAuthBtn.addEventListener('click', saveGitHubAuth);
     
+    // Add event listener for category change
+    formFields.category.addEventListener('change', handleCategoryChange);
+    
+    // Add event listeners for scalar value source radio buttons
+    scalarValueSourceRadios.forEach(radio => {
+        radio.addEventListener('change', toggleScalarValueFields);
+    });
+    
     // Load saved GitHub authentication
     loadGitHubAuth();
     
@@ -356,32 +364,37 @@ document.addEventListener('DOMContentLoaded', function() {
     // Display all records in the table
     function displayRecords() {
         const tbody = recordsTable.querySelector('tbody');
+        const thead = recordsTable.querySelector('thead');
         tbody.innerHTML = '';
         
+        // Rebuild the header row to include all CSV headers
+        const headerRow = document.createElement('tr');
+        
+        // Add Actions column first
+        const actionsHeader = document.createElement('th');
+        actionsHeader.textContent = 'Actions';
+        actionsHeader.className = 'actions-column';
+        headerRow.appendChild(actionsHeader);
+        
+        // Add all data columns from the CSV
+        headers.forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            th.className = 'data-column';
+            headerRow.appendChild(th);
+        });
+        
+        // Replace existing header row
+        thead.innerHTML = '';
+        thead.appendChild(headerRow);
+        
+        // Add data rows
         records.forEach(record => {
             const row = document.createElement('tr');
             
-            headers.forEach(header => {
-                const cell = document.createElement('td');
-                
-                // Display checkboxes as ✓ or ✗
-                if (checkboxFields.includes(header.toLowerCase())) {
-                    if (record[header]) {
-                        cell.innerHTML = '✓';
-                        cell.className = 'check-mark';
-                    } else {
-                        cell.innerHTML = '✗';
-                        cell.className = 'x-mark';
-                    }
-                } else {
-                    cell.textContent = record[header] || '';
-                }
-                
-                row.appendChild(cell);
-            });
-            
-            // Add action buttons
+            // Add action buttons as the first column
             const actionsCell = document.createElement('td');
+            actionsCell.className = 'actions-column';
             
             const editBtn = document.createElement('button');
             editBtn.textContent = 'Edit';
@@ -397,136 +410,19 @@ document.addEventListener('DOMContentLoaded', function() {
             actionsCell.appendChild(deleteBtn);
             row.appendChild(actionsCell);
             
-            tbody.appendChild(row);
-        });
-    }
-    
-    // Commit changes to GitHub with automatic commit message based on action
-    function commitChangesToGitHub(action, recordId) {
-        if (!githubAuth.token) {
-            showStatus(commitStatusDiv, 'GitHub authentication required', 'error');
-            return Promise.reject(new Error('GitHub authentication required'));
-        }
-        
-        // Generate appropriate commit message based on the action
-        let commitMessage;
-        switch (action) {
-            case 'add':
-                commitMessage = `Added Optional Field with ID: ${recordId}`;
-                break;
-            case 'edit':
-                commitMessage = `Updated Optional Field with ID: ${recordId}`;
-                break;
-            case 'delete':
-                commitMessage = `Deleted Optional Field with ID: ${recordId}`;
-                break;
-            default:
-                commitMessage = 'Updated ofields.csv';
-        }
-        
-        const csvContent = generateCSV();
-        
-        // First, check if the file exists and get its SHA if it does
-        return fetch(`https://api.github.com/repos/${githubAuth.owner}/${githubAuth.repo}/contents/ofields.csv?ref=${githubAuth.branch}`, {
-            headers: {
-                'Authorization': `token ${githubAuth.token}`
-            }
-        })
-        .then(response => {
-            if (response.status === 404) {
-                return null; // File doesn't exist yet
-            }
-            if (!response.ok) {
-                throw new Error(`GitHub API error: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Create the commit payload
-            const payload = {
-                message: commitMessage,
-                content: Base64.encode(csvContent),
-                branch: githubAuth.branch
-            };
-            
-            // If the file already exists, include its SHA
-            if (data && data.sha) {
-                payload.sha = data.sha;
-            }
-            
-            // Commit the file
-            return fetch(`https://api.github.com/repos/${githubAuth.owner}/${githubAuth.repo}/contents/ofields.csv`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `token ${githubAuth.token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`GitHub API error: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            showStatus(commitStatusDiv, `${commitMessage} (${data.commit.sha.substring(0, 7)})`, 'success');
-            return data;
-        })
-        .catch(error => {
-            showStatus(commitStatusDiv, `Error committing to GitHub: ${error.message}`, 'error');
-            throw error;
-        });
-    }
-    
-    // Generate CSV content
-    function generateCSV() {
-        let csvContent = headers.join(',') + '\n';
-        
-        records.forEach(record => {
-            const row = headers.map(header => {
-                let value = record[header];
-                
-                // Convert boolean to '1'/'0' for checkbox fields
-                if (checkboxFields.includes(header.toLowerCase())) {
-                    value = value ? '1' : '0';
-                } else {
-                    value = value || '';
-                }
-                
-                // Handle values with commas by enclosing in quotes
-                if (typeof value === 'string' && value.includes(',')) {
-                    value = `"${value}"`;
-                }
-                
-                return value;
-            });
-            csvContent += row.join(',') + '\n';
-        });
-        
-        return csvContent;
-    }
-    
-    // Display all records in the table
-    function displayRecords() {
-        const tbody = recordsTable.querySelector('tbody');
-        tbody.innerHTML = '';
-        
-        records.forEach(record => {
-            const row = document.createElement('tr');
-            
+            // Add data columns
             headers.forEach(header => {
                 const cell = document.createElement('td');
+                cell.className = 'data-column';
                 
                 // Display checkboxes as ✓ or ✗
                 if (checkboxFields.includes(header.toLowerCase())) {
                     if (record[header]) {
                         cell.innerHTML = '✓';
-                        cell.className = 'check-mark';
+                        cell.className = 'check-mark data-column';
                     } else {
                         cell.innerHTML = '✗';
-                        cell.className = 'x-mark';
+                        cell.className = 'x-mark data-column';
                     }
                 } else {
                     cell.textContent = record[header] || '';
@@ -535,25 +431,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 row.appendChild(cell);
             });
             
-            // Add action buttons
-            const actionsCell = document.createElement('td');
-            
-            const editBtn = document.createElement('button');
-            editBtn.textContent = 'Edit';
-            editBtn.className = 'edit-btn';
-            editBtn.addEventListener('click', () => populateForm(record));
-            
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = 'Delete';
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.addEventListener('click', () => deleteRecord(record.Id));
-            
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-            row.appendChild(actionsCell);
-            
             tbody.appendChild(row);
         });
+    }
+    
+    // Function to handle category change
+    function handleCategoryChange() {
+        const category = formFields.category.value;
+        
+        // Hide all category-specific fields first
+        document.querySelectorAll('.category-fields').forEach(el => {
+            el.style.display = 'none';
+        });
+        
+        // Show fields based on selected category
+        if (category === 'Scalar') {
+            scalarFieldsContainer.style.display = 'block';
+            // Initialize scalar value source fields
+            toggleScalarValueFields();
+        } else if (category === 'Vector') {
+            vectorFieldsContainer.style.display = 'block';
+        } else if (category === 'Table') {
+            tableFieldsContainer.style.display = 'block';
+        }
+    }
+    
+    // Function to toggle scalar value fields based on radio selection
+    function toggleScalarValueFields() {
+        const selectedValue = document.querySelector('input[name="scalarValueSource"]:checked').value;
+        
+        if (selectedValue === 'assumption') {
+            assumptionField.style.display = 'block';
+            minmaxFields.forEach(field => field.style.display = 'none');
+        } else {
+            assumptionField.style.display = 'none';
+            minmaxFields.forEach(field => field.style.display = 'block');
+        }
     }
     
     // Populate form with record data
@@ -757,48 +670,6 @@ document.addEventListener('DOMContentLoaded', function() {
         loadCSVFromGitHub();
     } else {
         showStatus(authStatusDiv, 'Please enter GitHub token to load data', 'error');
-    }
-    
-    // Add event listener for category change
-    formFields.category.addEventListener('change', handleCategoryChange);
-    
-    // Add event listeners for scalar value source radio buttons
-    scalarValueSourceRadios.forEach(radio => {
-        radio.addEventListener('change', toggleScalarValueFields);
-    });
-    
-    // Function to handle category change
-    function handleCategoryChange() {
-        const category = formFields.category.value;
-        
-        // Hide all category-specific fields first
-        document.querySelectorAll('.category-fields').forEach(el => {
-            el.style.display = 'none';
-        });
-        
-        // Show fields based on selected category
-        if (category === 'Scalar') {
-            scalarFieldsContainer.style.display = 'block';
-            // Initialize scalar value source fields
-            toggleScalarValueFields();
-        } else if (category === 'Vector') {
-            vectorFieldsContainer.style.display = 'block';
-        } else if (category === 'Table') {
-            tableFieldsContainer.style.display = 'block';
-        }
-    }
-    
-    // Function to toggle scalar value fields based on radio selection
-    function toggleScalarValueFields() {
-        const selectedValue = document.querySelector('input[name="scalarValueSource"]:checked').value;
-        
-        if (selectedValue === 'assumption') {
-            assumptionField.style.display = 'block';
-            minmaxFields.forEach(field => field.style.display = 'none');
-        } else {
-            assumptionField.style.display = 'none';
-            minmaxFields.forEach(field => field.style.display = 'block');
-        }
     }
     
     // Initialize the form
