@@ -23,8 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const githubTokenInput = document.getElementById('github-token');
     const saveAuthBtn = document.getElementById('saveAuthBtn');
     const authStatusDiv = document.getElementById('auth-status');
-    const commitMessageInput = document.getElementById('commit-message');
-    const commitBtn = document.getElementById('commitBtn');
     const commitStatusDiv = document.getElementById('commit-status');
     
     // Form fields
@@ -54,7 +52,6 @@ document.addEventListener('DOMContentLoaded', function() {
     addNewBtn.addEventListener('click', addNewRecord);
     clearBtn.addEventListener('click', clearForm);
     saveAuthBtn.addEventListener('click', saveGitHubAuth);
-    commitBtn.addEventListener('click', commitChangesToGitHub);
     
     // Load saved GitHub authentication
     loadGitHubAuth();
@@ -195,18 +192,33 @@ document.addEventListener('DOMContentLoaded', function() {
         displayRecords();
     }
     
-    // Commit changes to GitHub
-    function commitChangesToGitHub() {
+    // Commit changes to GitHub with automatic commit message based on action
+    function commitChangesToGitHub(action, recordId) {
         if (!githubAuth.token) {
             showStatus(commitStatusDiv, 'GitHub authentication required', 'error');
-            return;
+            return Promise.reject(new Error('GitHub authentication required'));
         }
         
-        const commitMessage = commitMessageInput.value.trim() || 'Update ofields.csv';
+        // Generate appropriate commit message based on the action
+        let commitMessage;
+        switch (action) {
+            case 'add':
+                commitMessage = `Added Optional Field with ID: ${recordId}`;
+                break;
+            case 'edit':
+                commitMessage = `Updated Optional Field with ID: ${recordId}`;
+                break;
+            case 'delete':
+                commitMessage = `Deleted Optional Field with ID: ${recordId}`;
+                break;
+            default:
+                commitMessage = 'Updated ofields.csv';
+        }
+        
         const csvContent = generateCSV();
         
         // First, check if the file exists and get its SHA if it does
-        fetch(`https://api.github.com/repos/${githubAuth.owner}/${githubAuth.repo}/contents/ofields.csv?ref=${githubAuth.branch}`, {
+        return fetch(`https://api.github.com/repos/${githubAuth.owner}/${githubAuth.repo}/contents/ofields.csv?ref=${githubAuth.branch}`, {
             headers: {
                 'Authorization': `token ${githubAuth.token}`
             }
@@ -250,10 +262,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            showStatus(commitStatusDiv, `Changes committed to GitHub: ${data.commit.sha.substring(0, 7)}`, 'success');
+            showStatus(commitStatusDiv, `${commitMessage} (${data.commit.sha.substring(0, 7)})`, 'success');
+            return data;
         })
         .catch(error => {
             showStatus(commitStatusDiv, `Error committing to GitHub: ${error.message}`, 'error');
+            throw error;
         });
     }
     
@@ -356,7 +370,7 @@ document.addEventListener('DOMContentLoaded', function() {
         recordForm.reset();
     }
     
-    // Save the current record
+    // Save the current record (either add new or update existing)
     function saveRecord() {
         if (!formFields.id.value) {
             alert('ID is required');
@@ -383,11 +397,14 @@ document.addEventListener('DOMContentLoaded', function() {
             'Table Link Type': formFields.tableLinkType.value
         };
         
+        let action = 'add'; // Default action
+        
         if (currentEditingId) {
             // Update existing record
             const index = records.findIndex(r => r.Id === currentEditingId);
             if (index !== -1) {
                 records[index] = formData;
+                action = 'edit';
             }
         } else {
             // Check if ID already exists
@@ -401,9 +418,20 @@ document.addEventListener('DOMContentLoaded', function() {
             records.push(formData);
         }
         
+        // Update the display
         displayRecords();
-        clearForm();
-        alert('Record saved successfully');
+        
+        // Auto-commit the change to GitHub
+        showStatus(commitStatusDiv, 'Committing changes to GitHub...', 'success');
+        
+        commitChangesToGitHub(action, formData.Id)
+            .then(() => {
+                clearForm();
+                alert('Record saved and committed to GitHub successfully');
+            })
+            .catch(error => {
+                alert(`Record saved locally but failed to commit to GitHub: ${error.message}`);
+            });
     }
     
     // Add a new record
@@ -417,12 +445,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (confirm('Are you sure you want to delete this record?')) {
             const index = records.findIndex(r => r.Id === id);
             if (index !== -1) {
+                // Remove the record
                 records.splice(index, 1);
+                
+                // Update the display
                 displayRecords();
+                
+                // If we're currently editing this record, clear the form
                 if (currentEditingId === id) {
                     clearForm();
                 }
-                alert('Record deleted successfully');
+                
+                // Auto-commit the deletion to GitHub
+                showStatus(commitStatusDiv, 'Committing deletion to GitHub...', 'success');
+                
+                commitChangesToGitHub('delete', id)
+                    .then(() => {
+                        alert('Record deleted and committed to GitHub successfully');
+                    })
+                    .catch(error => {
+                        alert(`Record deleted locally but failed to commit to GitHub: ${error.message}`);
+                    });
             }
         }
     }
