@@ -64,9 +64,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const scalarValueSourceRadios = document.getElementsByName('scalarValueSource');
     
     // Get category field containers
-    const scalarFields = document.querySelector('.scalar-fields');
-    const vectorFields = document.querySelector('.vector-fields');
-    const tableFields = document.querySelector('.table-fields');
+    const scalarFieldsContainer = document.querySelector('.scalar-fields');
+    const vectorFieldsContainer = document.querySelector('.vector-fields');
+    const tableFieldsContainer = document.querySelector('.table-fields');
     
     // Get min/max and assumption fields
     const assumptionField = document.querySelector('.assumption-field');
@@ -75,10 +75,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Checkbox fields
     const checkboxFields = ['r', 'u', 'p', 'h', 'i', 'd', 'm', 'g', 'x'];
     
-    // Additional fields based on category
-    const scalarFields = ['Scalar Type', 'Scalar Size', 'Scalar Value Source', 'Scalar Variable', 'Scalar Min', 'Scalar Max'];
-    const vectorFields = ['Vector Scale', 'Vector Table Type', 'Vector Size', 'Vector Opt Type', 'Vector Shape'];
-    const tableFields = ['KType', 'JJ', 'Table Link Type'];
+    // Additional field names based on category (for CSV headers)
+    const scalarFieldNames = ['Scalar Type', 'Scalar Size', 'Scalar Value Source', 'Scalar Variable', 'Scalar Min', 'Scalar Max'];
+    const vectorFieldNames = ['Vector Scale', 'Vector Table Type', 'Vector Size', 'Vector Opt Type', 'Vector Shape'];
+    const tableFieldNames = ['KType', 'JJ', 'Table Link Type'];
     
     // Event listeners
     saveBtn.addEventListener('click', saveRecord);
@@ -231,9 +231,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const requiredHeaders = [
             'Id', 'Name', 'Variable', 'Category', 'Table Type', 
             'R', 'U', 'P', 'H', 'I', 'D', 'M', 'G', 'X', 
-            'Scalar Type', 'Scalar Size', 'Scalar Value Source', 'Scalar Variable', 'Scalar Min', 'Scalar Max',
-            'Vector Scale', 'Vector Table Type', 'Vector Size', 'Vector Opt Type', 'Vector Shape',
-            'KType', 'JJ', 'Table Link Type'
+            ...scalarFieldNames,
+            ...vectorFieldNames,
+            ...tableFieldNames
         ];
         
         // Add any missing headers
@@ -778,13 +778,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Show fields based on selected category
         if (category === 'Scalar') {
-            scalarFields.style.display = 'block';
+            scalarFieldsContainer.style.display = 'block';
             // Initialize scalar value source fields
             toggleScalarValueFields();
         } else if (category === 'Vector') {
-            vectorFields.style.display = 'block';
+            vectorFieldsContainer.style.display = 'block';
         } else if (category === 'Table') {
-            tableFields.style.display = 'block';
+            tableFieldsContainer.style.display = 'block';
         }
     }
     
