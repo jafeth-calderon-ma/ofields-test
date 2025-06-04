@@ -4,15 +4,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let headers = [];
     let currentEditingId = null;
     let githubAuth = {
-        owner: '',
-        repo: '',
+        owner: 'jafeth-calderon-ma',
+        repo: 'ofields-test',
         token: '',
         branch: 'main'
     };
     
     // DOM elements
-    const csvFileInput = document.getElementById('csvFile');
-    const loadBtn = document.getElementById('loadBtn');
     const searchIdInput = document.getElementById('searchId');
     const searchBtn = document.getElementById('searchBtn');
     const recordForm = document.getElementById('recordForm');
@@ -23,10 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const downloadBtn = document.getElementById('downloadBtn');
     
     // GitHub elements
-    const repoOwnerInput = document.getElementById('repo-owner');
-    const repoNameInput = document.getElementById('repo-name');
     const githubTokenInput = document.getElementById('github-token');
-    const branchNameInput = document.getElementById('branch-name');
     const saveAuthBtn = document.getElementById('saveAuthBtn');
     const authStatusDiv = document.getElementById('auth-status');
     const commitMessageInput = document.getElementById('commit-message');
@@ -55,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Event listeners
-    loadBtn.addEventListener('click', loadCSV);
     searchBtn.addEventListener('click', searchRecord);
     saveBtn.addEventListener('click', saveRecord);
     addNewBtn.addEventListener('click', addNewRecord);
@@ -69,25 +63,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Save GitHub authentication to localStorage
     function saveGitHubAuth() {
-        githubAuth = {
-            owner: repoOwnerInput.value.trim(),
-            repo: repoNameInput.value.trim(),
-            token: githubTokenInput.value.trim(),
-            branch: branchNameInput.value.trim() || 'main'
-        };
+        githubAuth.token = githubTokenInput.value.trim();
         
-        if (!githubAuth.owner || !githubAuth.repo || !githubAuth.token) {
-            showStatus(authStatusDiv, 'Please fill in all GitHub authentication fields', 'error');
+        if (!githubAuth.token) {
+            showStatus(authStatusDiv, 'Please enter a GitHub token', 'error');
             return;
         }
-        
-        // Save to localStorage (encrypt token in a real application)
-        localStorage.setItem('githubAuth', JSON.stringify({
-            owner: githubAuth.owner,
-            repo: githubAuth.repo,
-            branch: githubAuth.branch
-            // Don't store token in localStorage in production!
-        }));
         
         // Store token in sessionStorage (more secure, but still not ideal for production)
         sessionStorage.setItem('githubToken', githubAuth.token);
@@ -98,26 +79,14 @@ document.addEventListener('DOMContentLoaded', function() {
         testGitHubConnection();
     }
     
-    // Load GitHub authentication from localStorage
+    // Load GitHub authentication from sessionStorage
     function loadGitHubAuth() {
-        const savedAuth = localStorage.getItem('githubAuth');
         const savedToken = sessionStorage.getItem('githubToken');
         
-        if (savedAuth) {
-            const parsedAuth = JSON.parse(savedAuth);
-            githubAuth = {
-                ...parsedAuth,
-                token: savedToken || ''
-            };
+        if (savedToken) {
+            githubAuth.token = savedToken;
             
-            repoOwnerInput.value = githubAuth.owner;
-            repoNameInput.value = githubAuth.repo;
-            branchNameInput.value = githubAuth.branch;
-            
-            // Don't set the token input value for security reasons
-            // The user will need to enter it again if sessionStorage is cleared
-            
-            if (githubAuth.owner && githubAuth.repo && githubAuth.token) {
+            if (githubAuth.token) {
                 // Load CSV directly from GitHub
                 loadCSVFromGitHub();
             }
@@ -126,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Test GitHub connection
     function testGitHubConnection() {
-        if (!githubAuth.owner || !githubAuth.repo || !githubAuth.token) {
+        if (!githubAuth.token) {
             return;
         }
         
@@ -143,6 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             showStatus(authStatusDiv, `Successfully connected to ${data.full_name}`, 'success');
+            loadCSVFromGitHub();
         })
         .catch(error => {
             showStatus(authStatusDiv, `Error connecting to GitHub: ${error.message}`, 'error');
@@ -162,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load CSV from GitHub
     function loadCSVFromGitHub() {
-        if (!githubAuth.owner || !githubAuth.repo || !githubAuth.token) {
+        if (!githubAuth.token) {
             showStatus(commitStatusDiv, 'GitHub authentication required', 'error');
             return;
         }
@@ -197,45 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             showStatus(commitStatusDiv, `Error loading CSV from GitHub: ${error.message}`, 'error');
-            // Load the local CSV file as fallback
-            loadLocalCSV();
         });
-    }
-    
-    // Load local CSV file
-    function loadLocalCSV() {
-        fetch('ofields.csv')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('File not found');
-                }
-                return response.text();
-            })
-            .then(content => {
-                parseCSV(content);
-            })
-            .catch(error => {
-                console.log('No local CSV file found. Creating empty records.');
-                headers = ['Id', 'Name', 'Variable', 'Category', 'Table Type', 'R', 'U', 'P', 'H', 'I', 'D', 'M', 'G', 'X', 'JJ', 'KType', 'Table Link Type'];
-                records = [];
-                displayRecords();
-            });
-    }
-    
-    // Load CSV file from input
-    function loadCSV() {
-        const file = csvFileInput.files[0];
-        if (!file) {
-            alert('Please select a CSV file');
-            return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const content = e.target.result;
-            parseCSV(content);
-        };
-        reader.readAsText(file);
     }
     
     // Parse CSV content
@@ -267,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Commit changes to GitHub
     function commitChangesToGitHub() {
-        if (!githubAuth.owner || !githubAuth.repo || !githubAuth.token) {
+        if (!githubAuth.token) {
             showStatus(commitStatusDiv, 'GitHub authentication required', 'error');
             return;
         }
@@ -518,10 +450,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.removeChild(link);
     }
     
-    // Initialize by trying to load the CSV from GitHub, then from local file
-    if (githubAuth.owner && githubAuth.repo && githubAuth.token) {
+    // Initialize by trying to load the CSV from GitHub
+    if (githubAuth.token) {
         loadCSVFromGitHub();
     } else {
-        loadLocalCSV();
+        showStatus(authStatusDiv, 'Please enter GitHub token to load data', 'error');
     }
 });
