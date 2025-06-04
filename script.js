@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const addNewBtn = document.getElementById('addNewBtn');
     const clearBtn = document.getElementById('clearBtn');
     const recordsTable = document.getElementById('recordsTable');
-    const downloadBtn = document.getElementById('downloadBtn');
     
     // GitHub elements
     const githubTokenInput = document.getElementById('github-token');
@@ -54,7 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
     saveBtn.addEventListener('click', saveRecord);
     addNewBtn.addEventListener('click', addNewRecord);
     clearBtn.addEventListener('click', clearForm);
-    downloadBtn.addEventListener('click', downloadCSV);
     saveAuthBtn.addEventListener('click', saveGitHubAuth);
     commitBtn.addEventListener('click', commitChangesToGitHub);
     
@@ -427,27 +425,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Record deleted successfully');
             }
         }
-    }
-    
-    // Download the CSV file
-    function downloadCSV() {
-        if (records.length === 0 && headers.length === 0) {
-            alert('No records to download');
-            return;
-        }
-        
-        const csvContent = generateCSV();
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', 'ofields_updated.csv');
-        link.style.display = 'none';
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
     }
     
     // Initialize by trying to load the CSV from GitHub
