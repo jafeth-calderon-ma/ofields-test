@@ -163,6 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Hide the message after 5 seconds
         setTimeout(() => {
             element.className = 'status-message';
+            element.style.display = 'none';
         }, 5000);
     }
     
@@ -488,6 +489,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Disable category field when editing existing record
         formFields.category.disabled = true;
+        // Ensure the category is visible even when disabled
+        formFields.category.style.backgroundColor = '#f9f9f9';
+        formFields.category.style.color = '#555';
         
         // Set checkbox fields
         formFields.r.checked = !!record.R;
@@ -545,6 +549,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Enable category selection for new records
         formFields.category.disabled = false;
+        formFields.category.style.backgroundColor = '';
+        formFields.category.style.color = '';
     }
     
     // Save the current record (either add new or update existing)
