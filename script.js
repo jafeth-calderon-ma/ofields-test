@@ -39,13 +39,46 @@ document.addEventListener('DOMContentLoaded', function() {
         m: document.getElementById('m'),
         g: document.getElementById('g'),
         x: document.getElementById('x'),
-        jj: document.getElementById('jj'),
+        
+        // Scalar fields
+        scalarType: document.getElementById('scalarType'),
+        scalarSize: document.getElementById('scalarSize'),
+        scalarVariable: document.getElementById('scalarVariable'),
+        scalarMin: document.getElementById('scalarMin'),
+        scalarMax: document.getElementById('scalarMax'),
+        
+        // Vector fields
+        vectorScale: document.getElementById('vectorScale'),
+        vectorTableType: document.getElementById('vectorTableType'),
+        vectorSize: document.getElementById('vectorSize'),
+        vectorOptType: document.getElementById('vectorOptType'),
+        vectorShape: document.getElementById('vectorShape'),
+        
+        // Table fields
         kType: document.getElementById('kType'),
+        jj: document.getElementById('jj'),
         tableLinkType: document.getElementById('tableLinkType')
     };
     
+    // Get the radio buttons for scalar value source
+    const scalarValueSourceRadios = document.getElementsByName('scalarValueSource');
+    
+    // Get category field containers
+    const scalarFields = document.querySelector('.scalar-fields');
+    const vectorFields = document.querySelector('.vector-fields');
+    const tableFields = document.querySelector('.table-fields');
+    
+    // Get min/max and assumption fields
+    const assumptionField = document.querySelector('.assumption-field');
+    const minmaxFields = document.querySelectorAll('.minmax-field');
+    
     // Checkbox fields
     const checkboxFields = ['r', 'u', 'p', 'h', 'i', 'd', 'm', 'g', 'x'];
+    
+    // Additional fields based on category
+    const scalarFields = ['Scalar Type', 'Scalar Size', 'Scalar Value Source', 'Scalar Variable', 'Scalar Min', 'Scalar Max'];
+    const vectorFields = ['Vector Scale', 'Vector Table Type', 'Vector Size', 'Vector Opt Type', 'Vector Shape'];
+    const tableFields = ['KType', 'JJ', 'Table Link Type'];
     
     // Event listeners
     saveBtn.addEventListener('click', saveRecord);
@@ -194,7 +227,178 @@ document.addEventListener('DOMContentLoaded', function() {
             records.push(record);
         }
         
+        // Ensure all headers exist by adding any new ones
+        const requiredHeaders = [
+            'Id', 'Name', 'Variable', 'Category', 'Table Type', 
+            'R', 'U', 'P', 'H', 'I', 'D', 'M', 'G', 'X', 
+            'Scalar Type', 'Scalar Size', 'Scalar Value Source', 'Scalar Variable', 'Scalar Min', 'Scalar Max',
+            'Vector Scale', 'Vector Table Type', 'Vector Size', 'Vector Opt Type', 'Vector Shape',
+            'KType', 'JJ', 'Table Link Type'
+        ];
+        
+        // Add any missing headers
+        requiredHeaders.forEach(header => {
+            if (!headers.includes(header)) {
+                headers.push(header);
+            }
+        });
+        
         displayRecords();
+    }
+    
+    // Commit changes to GitHub with automatic commit message based on action
+    function commitChangesToGitHub(action, recordId) {
+        if (!githubAuth.token) {
+            showStatus(commitStatusDiv, 'GitHub authentication required', 'error');
+            return Promise.reject(new Error('GitHub authentication required'));
+        }
+        
+        // Generate appropriate commit message based on the action
+        let commitMessage;
+        switch (action) {
+            case 'add':
+                commitMessage = `Added Optional Field with ID: ${recordId}`;
+                break;
+            case 'edit':
+                commitMessage = `Updated Optional Field with ID: ${recordId}`;
+                break;
+            case 'delete':
+                commitMessage = `Deleted Optional Field with ID: ${recordId}`;
+                break;
+            default:
+                commitMessage = 'Updated ofields.csv';
+        }
+        
+        const csvContent = generateCSV();
+        
+        // First, check if the file exists and get its SHA if it does
+        return fetch(`https://api.github.com/repos/${githubAuth.owner}/${githubAuth.repo}/contents/ofields.csv?ref=${githubAuth.branch}`, {
+            headers: {
+                'Authorization': `token ${githubAuth.token}`
+            }
+        })
+        .then(response => {
+            if (response.status === 404) {
+                return null; // File doesn't exist yet
+            }
+            if (!response.ok) {
+                throw new Error(`GitHub API error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Create the commit payload
+            const payload = {
+                message: commitMessage,
+                content: Base64.encode(csvContent),
+                branch: githubAuth.branch
+            };
+            
+            // If the file already exists, include its SHA
+            if (data && data.sha) {
+                payload.sha = data.sha;
+            }
+            
+            // Commit the file
+            return fetch(`https://api.github.com/repos/${githubAuth.owner}/${githubAuth.repo}/contents/ofields.csv`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${githubAuth.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`GitHub API error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            showStatus(commitStatusDiv, `${commitMessage} (${data.commit.sha.substring(0, 7)})`, 'success');
+            return data;
+        })
+        .catch(error => {
+            showStatus(commitStatusDiv, `Error committing to GitHub: ${error.message}`, 'error');
+            throw error;
+        });
+    }
+    
+    // Generate CSV content
+    function generateCSV() {
+        let csvContent = headers.join(',') + '\n';
+        
+        records.forEach(record => {
+            const row = headers.map(header => {
+                let value = record[header];
+                
+                // Convert boolean to '1'/'0' for checkbox fields
+                if (checkboxFields.includes(header.toLowerCase())) {
+                    value = value ? '1' : '0';
+                } else {
+                    value = value || '';
+                }
+                
+                // Handle values with commas by enclosing in quotes
+                if (typeof value === 'string' && value.includes(',')) {
+                    value = `"${value}"`;
+                }
+                
+                return value;
+            });
+            csvContent += row.join(',') + '\n';
+        });
+        
+        return csvContent;
+    }
+    
+    // Display all records in the table
+    function displayRecords() {
+        const tbody = recordsTable.querySelector('tbody');
+        tbody.innerHTML = '';
+        
+        records.forEach(record => {
+            const row = document.createElement('tr');
+            
+            headers.forEach(header => {
+                const cell = document.createElement('td');
+                
+                // Display checkboxes as ✓ or ✗
+                if (checkboxFields.includes(header.toLowerCase())) {
+                    if (record[header]) {
+                        cell.innerHTML = '✓';
+                        cell.className = 'check-mark';
+                    } else {
+                        cell.innerHTML = '✗';
+                        cell.className = 'x-mark';
+                    }
+                } else {
+                    cell.textContent = record[header] || '';
+                }
+                
+                row.appendChild(cell);
+            });
+            
+            // Add action buttons
+            const actionsCell = document.createElement('td');
+            
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.className = 'edit-btn';
+            editBtn.addEventListener('click', () => populateForm(record));
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.addEventListener('click', () => deleteRecord(record.Id));
+            
+            actionsCell.appendChild(editBtn);
+            actionsCell.appendChild(deleteBtn);
+            row.appendChild(actionsCell);
+            
+            tbody.appendChild(row);
+        });
     }
     
     // Commit changes to GitHub with automatic commit message based on action
@@ -356,15 +560,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function populateForm(record) {
         currentEditingId = record.Id;
         
-        // Set text fields
+        // Set basic fields
         formFields.id.value = record.Id || '';
         formFields.name.value = record.Name || '';
         formFields.variable.value = record.Variable || '';
         formFields.category.value = record.Category || '';
         formFields.tableType.value = record['Table Type'] || '';
-        formFields.jj.value = record.JJ || '';
-        formFields.kType.value = record.KType || '';
-        formFields.tableLinkType.value = record['Table Link Type'] || '';
+        
+        // Disable category field when editing existing record
+        formFields.category.disabled = true;
         
         // Set checkbox fields
         formFields.r.checked = !!record.R;
@@ -376,18 +580,63 @@ document.addEventListener('DOMContentLoaded', function() {
         formFields.m.checked = !!record.M;
         formFields.g.checked = !!record.G;
         formFields.x.checked = !!record.X;
+        
+        // Show fields based on category
+        handleCategoryChange();
+        
+        // Set category-specific fields
+        if (record.Category === 'Scalar') {
+            formFields.scalarType.value = record['Scalar Type'] || 'Alpha';
+            formFields.scalarSize.value = record['Scalar Size'] || 'Integer';
+            
+            // Set value source radio buttons
+            const valueSource = record['Scalar Value Source'] || 'assumption';
+            document.querySelector(`input[name="scalarValueSource"][value="${valueSource}"]`).checked = true;
+            
+            formFields.scalarVariable.value = record['Scalar Variable'] || '';
+            formFields.scalarMin.value = record['Scalar Min'] || '';
+            formFields.scalarMax.value = record['Scalar Max'] || '';
+            
+            // Show/hide appropriate fields
+            toggleScalarValueFields();
+            
+        } else if (record.Category === 'Vector') {
+            formFields.vectorScale.value = record['Vector Scale'] || '0.001';
+            formFields.vectorTableType.value = record['Vector Table Type'] || '';
+            formFields.vectorSize.value = record['Vector Size'] || '121';
+            formFields.vectorOptType.value = record['Vector Opt Type'] || '';
+            formFields.vectorShape.value = record['Vector Shape'] || 'Policy year/quarter';
+            
+        } else if (record.Category === 'Table') {
+            formFields.kType.value = record['KType'] || '';
+            formFields.jj.value = record['JJ'] || '';
+            formFields.tableLinkType.value = record['Table Link Type'] || '0';
+        }
     }
     
     // Clear the form
     function clearForm() {
         currentEditingId = null;
         recordForm.reset();
+        
+        // Hide all category-specific fields
+        document.querySelectorAll('.category-fields').forEach(el => {
+            el.style.display = 'none';
+        });
+        
+        // Enable category selection for new records
+        formFields.category.disabled = false;
     }
     
     // Save the current record (either add new or update existing)
     function saveRecord() {
         if (!formFields.id.value) {
             alert('ID is required');
+            return;
+        }
+        
+        if (!formFields.category.value) {
+            alert('Category is required');
             return;
         }
         
@@ -405,11 +654,28 @@ document.addEventListener('DOMContentLoaded', function() {
             D: formFields.d.checked,
             M: formFields.m.checked,
             G: formFields.g.checked,
-            X: formFields.x.checked,
-            JJ: formFields.jj.value,
-            KType: formFields.kType.value,
-            'Table Link Type': formFields.tableLinkType.value
+            X: formFields.x.checked
         };
+        
+        // Add category-specific fields
+        if (formData.Category === 'Scalar') {
+            formData['Scalar Type'] = formFields.scalarType.value;
+            formData['Scalar Size'] = formFields.scalarSize.value;
+            formData['Scalar Value Source'] = document.querySelector('input[name="scalarValueSource"]:checked').value;
+            formData['Scalar Variable'] = formFields.scalarVariable.value;
+            formData['Scalar Min'] = formFields.scalarMin.value;
+            formData['Scalar Max'] = formFields.scalarMax.value;
+        } else if (formData.Category === 'Vector') {
+            formData['Vector Scale'] = formFields.vectorScale.value;
+            formData['Vector Table Type'] = formFields.vectorTableType.value;
+            formData['Vector Size'] = formFields.vectorSize.value;
+            formData['Vector Opt Type'] = formFields.vectorOptType.value;
+            formData['Vector Shape'] = formFields.vectorShape.value;
+        } else if (formData.Category === 'Table') {
+            formData['KType'] = formFields.kType.value;
+            formData['JJ'] = formFields.jj.value;
+            formData['Table Link Type'] = formFields.tableLinkType.value;
+        }
         
         let action = 'add'; // Default action
         
@@ -417,6 +683,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update existing record
             const index = records.findIndex(r => r.Id === currentEditingId);
             if (index !== -1) {
+                // Preserve the original category if editing
+                formData.Category = records[index].Category;
                 records[index] = formData;
                 action = 'edit';
             }
@@ -490,4 +758,49 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         showStatus(authStatusDiv, 'Please enter GitHub token to load data', 'error');
     }
+    
+    // Add event listener for category change
+    formFields.category.addEventListener('change', handleCategoryChange);
+    
+    // Add event listeners for scalar value source radio buttons
+    scalarValueSourceRadios.forEach(radio => {
+        radio.addEventListener('change', toggleScalarValueFields);
+    });
+    
+    // Function to handle category change
+    function handleCategoryChange() {
+        const category = formFields.category.value;
+        
+        // Hide all category-specific fields first
+        document.querySelectorAll('.category-fields').forEach(el => {
+            el.style.display = 'none';
+        });
+        
+        // Show fields based on selected category
+        if (category === 'Scalar') {
+            scalarFields.style.display = 'block';
+            // Initialize scalar value source fields
+            toggleScalarValueFields();
+        } else if (category === 'Vector') {
+            vectorFields.style.display = 'block';
+        } else if (category === 'Table') {
+            tableFields.style.display = 'block';
+        }
+    }
+    
+    // Function to toggle scalar value fields based on radio selection
+    function toggleScalarValueFields() {
+        const selectedValue = document.querySelector('input[name="scalarValueSource"]:checked').value;
+        
+        if (selectedValue === 'assumption') {
+            assumptionField.style.display = 'block';
+            minmaxFields.forEach(field => field.style.display = 'none');
+        } else {
+            assumptionField.style.display = 'none';
+            minmaxFields.forEach(field => field.style.display = 'block');
+        }
+    }
+    
+    // Initialize the form
+    clearForm();
 });

@@ -196,6 +196,66 @@ tr:nth-child(even) {
     margin: 0;
 }
 
+/* Styles for dropdown selects */
+select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+    background-color: white;
+}
+
+/* Styles for radio buttons */
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.radio-group input[type="radio"] {
+    margin-right: 8px;
+}
+
+/* Category specific section styles */
+.category-fields {
+    margin: 10px 0;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    background-color: #fafafa;
+}
+
+/* Add a subtle header for each category section */
+.category-fields::before {
+    content: attr(data-category);
+    display: block;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #555;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+.scalar-fields::before {
+    content: "Scalar Properties";
+}
+
+.vector-fields::before {
+    content: "Vector Properties";
+}
+
+.table-fields::before {
+    content: "Table Properties";
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 10px;

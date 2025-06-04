@@ -41,8 +41,125 @@
                 </div>
                 <div class="form-group">
                     <label for="category">Category:</label>
-                    <input type="text" id="category">
+                    <select id="category">
+                        <option value="">-- Select Category --</option>
+                        <option value="Scalar">Scalar</option>
+                        <option value="Vector">Vector</option>
+                        <option value="Table">Table</option>
+                    </select>
                 </div>
+                
+                <!-- Scalar specific fields -->
+                <div class="category-fields scalar-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="scalarType">Type:</label>
+                        <select id="scalarType">
+                            <option value="Alpha">Alpha</option>
+                            <option value="Numeric">Numeric</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="scalarSize">Size:</label>
+                        <select id="scalarSize">
+                            <option value="Integer">Integer</option>
+                            <option value="Float">Float</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Value Source:</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="scalarValueSource" value="assumption" checked> 
+                                Use assumption screen
+                            </label>
+                            <label>
+                                <input type="radio" name="scalarValueSource" value="minmax"> 
+                                Min/Max here
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group assumption-field">
+                        <label for="scalarVariable">Variable:</label>
+                        <input type="text" id="scalarVariable">
+                    </div>
+                    <div class="form-group minmax-field" style="display: none;">
+                        <label for="scalarMin">Min:</label>
+                        <input type="text" id="scalarMin">
+                    </div>
+                    <div class="form-group minmax-field" style="display: none;">
+                        <label for="scalarMax">Max:</label>
+                        <input type="text" id="scalarMax">
+                    </div>
+                </div>
+                
+                <!-- Vector specific fields -->
+                <div class="category-fields vector-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="vectorScale">Vector Scale:</label>
+                        <select id="vectorScale">
+                            <option value="0.001">0.001</option>
+                            <option value="1">1</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="vectorTableType">Vector Table Type:</label>
+                        <input type="text" id="vectorTableType">
+                    </div>
+                    <div class="form-group">
+                        <label for="vectorSize">Vector Size:</label>
+                        <select id="vectorSize">
+                            <option value="121">121</option>
+                            <option value="484">484</option>
+                            <option value="1452">1452</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="vectorOptType">Vector Opt Type:</label>
+                        <input type="text" id="vectorOptType">
+                    </div>
+                    <div class="form-group">
+                        <label for="vectorShape">Vector Shape:</label>
+                        <select id="vectorShape">
+                            <option value="Policy year/quarter">Policy year/quarter</option>
+                            <option value="Index month ref">Index month ref</option>
+                            <option value="Policy 100">Policy 100</option>
+                            <option value="Index day ref">Index day ref</option>
+                            <option value="Policy linear interp">Policy linear interp</option>
+                            <option value="Index simple">Index simple</option>
+                            <option value="Generic">Generic</option>
+                            <option value="Pol year/quarter with limit">Pol year/quarter with limit</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Table specific fields -->
+                <div class="category-fields table-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="kType">KType:</label>
+                        <input type="text" id="kType">
+                    </div>
+                    <div class="form-group">
+                        <label for="jj">JJ:</label>
+                        <input type="text" id="jj">
+                    </div>
+                    <div class="form-group">
+                        <label for="tableLinkType">Table Link Type:</label>
+                        <select id="tableLinkType">
+                            <option value="0">0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                </div>
+                
                 <div class="form-group">
                     <label for="tableType">Table Type:</label>
                     <input type="text" id="tableType">
@@ -88,18 +205,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="jj">JJ:</label>
-                    <input type="text" id="jj">
-                </div>
-                <div class="form-group">
-                    <label for="kType">KType:</label>
-                    <input type="text" id="kType">
-                </div>
-                <div class="form-group">
-                    <label for="tableLinkType">Table Link Type:</label>
-                    <input type="text" id="tableLinkType">
-                </div>
+                
                 <div class="button-group">
                     <button type="button" id="saveBtn">Save Record</button>
                     <button type="button" id="addNewBtn">Add New Record</button>
