@@ -11,8 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // DOM elements
-    const searchIdInput = document.getElementById('searchId');
-    const searchBtn = document.getElementById('searchBtn');
     const recordForm = document.getElementById('recordForm');
     const saveBtn = document.getElementById('saveBtn');
     const addNewBtn = document.getElementById('addNewBtn');
@@ -47,7 +45,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Event listeners
-    searchBtn.addEventListener('click', searchRecord);
     saveBtn.addEventListener('click', saveRecord);
     addNewBtn.addEventListener('click', addNewRecord);
     clearBtn.addEventListener('click', clearForm);
@@ -323,22 +320,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             tbody.appendChild(row);
         });
-    }
-    
-    // Search for a record by ID
-    function searchRecord() {
-        const searchId = searchIdInput.value.trim();
-        if (!searchId) {
-            alert('Please enter an ID to search');
-            return;
-        }
-        
-        const record = records.find(r => r.Id === searchId);
-        if (record) {
-            populateForm(record);
-        } else {
-            alert('Record not found');
-        }
     }
     
     // Populate form with record data
