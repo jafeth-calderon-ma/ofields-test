@@ -1,3 +1,4 @@
-Id,Name,Variable,Category,Table Type,R,U,P,H,I,D,M,G,X,JJ,KType,Table Link Type
-1234,Test Name,Test Variable,Test Category,Test Table Type,1,0,1,0,0,0,0,0,1,0,A,ABC
-45678,Test Name B,Test Variable B,Test Category B,Test Table Type B,1,0,1,1,0,0,1,0,1,3,B,DEFGH
+Id,Name,Variable,Category,Table Type,R,U,P,H,I,D,M,G,X,JJ,KType,Table Link Type,Scalar Type,Scalar Size,Scalar Value Source,Scalar Variable,Scalar Min,Scalar Max,Vector Scale,Vector Table Type,Vector Size,Vector Opt Type,Vector Shape
+1234,Test Name,Test Variable,Test Category,Test Table Type,1,0,1,0,0,0,0,0,1,0,A,ABC,,,,,,,,,,,
+45678,Test Name B,Test Variable B,Test Category B,Test Table Type B,1,0,1,1,0,0,1,0,1,3,B,DEFGH,,,,,,,,,,,
+890,Test Name C,Variable C,Vector,Type Table,1,0,1,0,0,0,0,0,0,,,,,,,,,,1,Table Type,484,ABCDEF,Policy 100
