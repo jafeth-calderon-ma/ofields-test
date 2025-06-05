@@ -1,2 +1,2 @@
 Id,Name,Variable,Category,Table Type,R,U,P,H,I,D,M,G,X,JJ,KType,Table Link Type,Scalar Type,Scalar Size,Scalar Value Source,Scalar Variable,Scalar Min,Scalar Max,Vector Scale,Vector Table Type,Vector Size,Vector Opt Type,Vector Shape
-1234,Test,Test Var Scalar,Scalar,TT1,1,1,0,1,1,0,0,0,0,,,,Numeric,Float,assumption,Var1,,,,,,,
+1234,Test,Test Var Scalar,Scalar,TT1,1,1,0,1,1,0,0,0,0,,,,Alpha,Float,assumption,,,,,,,,
