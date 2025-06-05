@@ -429,10 +429,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     const value = record[header] || '';
                     cell.textContent = value;
-                    // Add title attribute for tooltip on hover
-                    if (value) {
-                        cell.title = value;
-                    }
+                    // Remove title attribute to prevent tooltip on hover
+                    // if (value) {
+                    //     cell.title = value;
+                    // }
                 }
                 
                 row.appendChild(cell);
