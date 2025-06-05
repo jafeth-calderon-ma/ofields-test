@@ -469,9 +469,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (selectedValue === 'assumption') {
             assumptionField.style.display = 'block';
-            minmaxFields.forEach(field => field.style.display = 'none');
+            minmaxFields.forEach(field => {
+                field.style.display = 'none';
+                // Clear Min/Max fields when switching to assumption
+                if (field.querySelector('input')) {
+                    field.querySelector('input').value = '';
+                }
+            });
         } else {
             assumptionField.style.display = 'none';
+            // Clear Variable field when switching to min/max
+            if (formFields.scalarVariable) {
+                formFields.scalarVariable.value = '';
+            }
             minmaxFields.forEach(field => field.style.display = 'block');
         }
     }
