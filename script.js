@@ -97,7 +97,53 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load saved GitHub authentication
     loadGitHubAuth();
     
-    // Save GitHub authentication to localStorage
+    // Show status message
+    function showStatus(element, message, type) {
+        element.textContent = message;
+        element.className = 'status-message ' + type;
+        
+        // Hide the message after 5 seconds
+        setTimeout(() => {
+            element.className = 'status-message';
+            element.style.display = 'none';
+        }, 5000);
+    }
+    
+    // Generic GitHub API request handler with error handling
+    function githubRequest(url, options = {}) {
+        if (!githubAuth.token) {
+            showStatus(commitStatusDiv, 'GitHub authentication required', 'error');
+            return Promise.reject(new Error('GitHub authentication required'));
+        }
+        
+        // Set default headers with authentication
+        const headers = {
+            'Authorization': `token ${githubAuth.token}`,
+            ...options.headers
+        };
+        
+        return fetch(url, { ...options, headers })
+            .then(response => {
+                if (response.status === 404) {
+                    return null; // File doesn't exist
+                }
+                if (!response.ok) {
+                    return response.json()
+                        .then(errorData => {
+                            throw new Error(`GitHub API error: ${response.status} - ${errorData.message || 'Unknown error'}`);
+                        })
+                        .catch(() => {
+                            throw new Error(`GitHub API error: ${response.status}`);
+                        });
+                }
+                if (response.status === 204) { // No Content
+                    return null;
+                }
+                return response.json();
+            });
+    }
+    
+    // Save GitHub authentication to sessionStorage
     function saveGitHubAuth() {
         githubAuth.token = githubTokenInput.value.trim();
         
@@ -126,85 +172,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Load CSV directly from GitHub
                 loadCSVFromGitHub();
             }
+        } else {
+            showStatus(authStatusDiv, 'Please enter GitHub token to load data', 'warning');
         }
     }
     
     // Test GitHub connection
     function testGitHubConnection() {
-        if (!githubAuth.token) {
-            return;
-        }
+        const repoUrl = `https://api.github.com/repos/${githubAuth.owner}/${githubAuth.repo}`;
         
-        fetch(`https://api.github.com/repos/${githubAuth.owner}/${githubAuth.repo}`, {
-            headers: {
-                'Authorization': `token ${githubAuth.token}`
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`GitHub API error: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            showStatus(authStatusDiv, `Successfully connected to ${data.full_name}`, 'success');
-            loadCSVFromGitHub();
-        })
-        .catch(error => {
-            showStatus(authStatusDiv, `Error connecting to GitHub: ${error.message}`, 'error');
-        });
-    }
-    
-    // Show status message
-    function showStatus(element, message, type) {
-        element.textContent = message;
-        element.className = 'status-message ' + type;
-        
-        // Hide the message after 5 seconds
-        setTimeout(() => {
-            element.className = 'status-message';
-            element.style.display = 'none';
-        }, 5000);
+        githubRequest(repoUrl)
+            .then(data => {
+                if (data) {
+                    showStatus(authStatusDiv, `Successfully connected to ${data.full_name}`, 'success');
+                    loadCSVFromGitHub();
+                }
+            })
+            .catch(error => {
+                showStatus(authStatusDiv, `Error connecting to GitHub: ${error.message}`, 'error');
+            });
     }
     
     // Load CSV from GitHub
     function loadCSVFromGitHub() {
-        if (!githubAuth.token) {
-            showStatus(commitStatusDiv, 'GitHub authentication required', 'error');
-            return;
-        }
-        
         const url = `https://api.github.com/repos/${githubAuth.owner}/${githubAuth.repo}/contents/ofields.csv?ref=${githubAuth.branch}`;
         
-        fetch(url, {
-            headers: {
-                'Authorization': `token ${githubAuth.token}`
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                if (response.status === 404) {
+        githubRequest(url)
+            .then(data => {
+                if (!data) {
                     // File doesn't exist yet, create empty records
                     headers = ['Id', 'Name', 'Variable', 'Category', 'Table Type', 'R', 'U', 'P', 'H', 'I', 'D', 'M', 'G', 'X', 'JJ', 'KType', 'Table Link Type'];
                     records = [];
                     displayRecords();
-                    return null;
+                    return;
                 }
-                throw new Error(`GitHub API error: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data) {
+                
                 // Decode content from base64
                 const content = atob(data.content);
                 parseCSV(content);
                 showStatus(commitStatusDiv, 'CSV loaded from GitHub', 'success');
-            }
-        })
-        .catch(error => {
-            showStatus(commitStatusDiv, `Error loading CSV from GitHub: ${error.message}`, 'error');
-        });
+            })
+            .catch(error => {
+                showStatus(commitStatusDiv, `Error loading CSV from GitHub: ${error.message}`, 'error');
+            });
     }
     
     // Parse CSV content
@@ -255,85 +265,6 @@ document.addEventListener('DOMContentLoaded', function() {
         displayRecords();
     }
     
-    // Commit changes to GitHub with automatic commit message based on action
-    function commitChangesToGitHub(action, recordId) {
-        if (!githubAuth.token) {
-            showStatus(commitStatusDiv, 'GitHub authentication required', 'error');
-            return Promise.reject(new Error('GitHub authentication required'));
-        }
-        
-        // Generate appropriate commit message based on the action
-        let commitMessage;
-        switch (action) {
-            case 'add':
-                commitMessage = `Added Optional Field with ID: ${recordId}`;
-                break;
-            case 'edit':
-                commitMessage = `Updated Optional Field with ID: ${recordId}`;
-                break;
-            case 'delete':
-                commitMessage = `Deleted Optional Field with ID: ${recordId}`;
-                break;
-            default:
-                commitMessage = 'Updated ofields.csv';
-        }
-        
-        const csvContent = generateCSV();
-        
-        // First, check if the file exists and get its SHA if it does
-        return fetch(`https://api.github.com/repos/${githubAuth.owner}/${githubAuth.repo}/contents/ofields.csv?ref=${githubAuth.branch}`, {
-            headers: {
-                'Authorization': `token ${githubAuth.token}`
-            }
-        })
-        .then(response => {
-            if (response.status === 404) {
-                return null; // File doesn't exist yet
-            }
-            if (!response.ok) {
-                throw new Error(`GitHub API error: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Create the commit payload
-            const payload = {
-                message: commitMessage,
-                content: Base64.encode(csvContent),
-                branch: githubAuth.branch
-            };
-            
-            // If the file already exists, include its SHA
-            if (data && data.sha) {
-                payload.sha = data.sha;
-            }
-            
-            // Commit the file
-            return fetch(`https://api.github.com/repos/${githubAuth.owner}/${githubAuth.repo}/contents/ofields.csv`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `token ${githubAuth.token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`GitHub API error: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            showStatus(commitStatusDiv, `${commitMessage} (${data.commit.sha.substring(0, 7)})`, 'success');
-            return data;
-        })
-        .catch(error => {
-            showStatus(commitStatusDiv, `Error committing to GitHub: ${error.message}`, 'error');
-            throw error;
-        });
-    }
-    
     // Generate CSV content
     function generateCSV() {
         let csvContent = headers.join(',') + '\n';
@@ -360,6 +291,71 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         return csvContent;
+    }
+    
+    // Commit changes to GitHub with automatic commit message based on action
+    function commitChangesToGitHub(action, recordId, retryCount = 0) {
+        if (retryCount >= 3) {
+            showStatus(commitStatusDiv, `Failed after multiple retries. Please try again later.`, 'error');
+            return Promise.reject(new Error('Maximum retry attempts reached'));
+        }
+        
+        // Generate appropriate commit message based on the action
+        let commitMessage;
+        switch (action) {
+            case 'add': commitMessage = `Added Optional Field with ID: ${recordId}`; break;
+            case 'edit': commitMessage = `Updated Optional Field with ID: ${recordId}`; break;
+            case 'delete': commitMessage = `Deleted Optional Field with ID: ${recordId}`; break;
+            default: commitMessage = 'Updated ofields.csv';
+        }
+        
+        const csvContent = generateCSV();
+        const fileUrl = `https://api.github.com/repos/${githubAuth.owner}/${githubAuth.repo}/contents/ofields.csv?ref=${githubAuth.branch}`;
+        
+        // First, get the current file to get its SHA
+        return githubRequest(fileUrl)
+            .then(data => {
+                // Create the commit payload
+                const payload = {
+                    message: commitMessage,
+                    content: Base64.encode(csvContent),
+                    branch: githubAuth.branch
+                };
+                
+                // If the file already exists, include its SHA
+                if (data && data.sha) {
+                    payload.sha = data.sha;
+                }
+                
+                // Commit the file
+                return githubRequest(fileUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            })
+            .then(data => {
+                if (data) {
+                    showStatus(commitStatusDiv, `${commitMessage} (${data.commit.sha.substring(0, 7)})`, 'success');
+                    return data;
+                }
+            })
+            .catch(error => {
+                // Handle conflict errors (HTTP 409) with retry logic
+                if (error.message.includes('409')) {
+                    const retryDelay = 1000 * (retryCount + 1); // Exponential backoff
+                    showStatus(commitStatusDiv, `Conflict detected. Retrying in ${retryDelay/1000}s...`, 'warning');
+                    
+                    return new Promise(resolve => {
+                        setTimeout(() => {
+                            resolve(commitChangesToGitHub(action, recordId, retryCount + 1));
+                        }, retryDelay);
+                    });
+                }
+                
+                showStatus(commitStatusDiv, `Error committing to GitHub: ${error.message}`, 'error');
+                throw error;
+            });
     }
     
     // Display all records in the table
@@ -429,10 +425,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     const value = record[header] || '';
                     cell.textContent = value;
-                    // Remove title attribute to prevent tooltip on hover
-                    // if (value) {
-                    //     cell.title = value;
-                    // }
                 }
                 
                 row.appendChild(cell);
@@ -504,15 +496,9 @@ document.addEventListener('DOMContentLoaded', function() {
         formFields.category.style.color = '#555';
         
         // Set checkbox fields
-        formFields.r.checked = !!record.R;
-        formFields.u.checked = !!record.U;
-        formFields.p.checked = !!record.P;
-        formFields.h.checked = !!record.H;
-        formFields.i.checked = !!record.I;
-        formFields.d.checked = !!record.D;
-        formFields.m.checked = !!record.M;
-        formFields.g.checked = !!record.G;
-        formFields.x.checked = !!record.X;
+        checkboxFields.forEach(field => {
+            formFields[field].checked = !!record[field.toUpperCase()];
+        });
         
         // Show fields based on category
         handleCategoryChange();
@@ -580,17 +566,13 @@ document.addEventListener('DOMContentLoaded', function() {
             Name: formFields.name.value,
             Variable: formFields.variable.value,
             Category: formFields.category.value,
-            'Table Type': formFields.tableType.value,
-            R: formFields.r.checked,
-            U: formFields.u.checked,
-            P: formFields.p.checked,
-            H: formFields.h.checked,
-            I: formFields.i.checked,
-            D: formFields.d.checked,
-            M: formFields.m.checked,
-            G: formFields.g.checked,
-            X: formFields.x.checked
+            'Table Type': formFields.tableType.value
         };
+        
+        // Add checkbox fields
+        checkboxFields.forEach(field => {
+            formData[field.toUpperCase()] = formFields[field].checked;
+        });
         
         // Add category-specific fields
         if (formData.Category === 'Scalar') {
@@ -685,13 +667,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
             }
         }
-    }
-    
-    // Initialize by trying to load the CSV from GitHub
-    if (githubAuth.token) {
-        loadCSVFromGitHub();
-    } else {
-        showStatus(authStatusDiv, 'Please enter GitHub token to load data', 'error');
     }
     
     // Initialize the form
