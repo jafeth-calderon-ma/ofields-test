@@ -1,3 +1,3 @@
 Id,Name,Variable,Category,Table Type,R,U,P,H,I,D,M,G,X,JJ,KType,Table Link Type,Scalar Type,Scalar Size,Scalar Value Source,Scalar Variable,Scalar Min,Scalar Max,Vector Scale,Vector Table Type,Vector Size,Vector Opt Type,Vector Shape
 8787,Test 2,Var 3,Table,AAA,0,1,1,0,1,0,0,0,0,B,A,3,,,,,,,,,,,
-65,Test 65,V65,Scalar,T65,1,0,0,0,0,0,0,0,0,,,,Numeric,Float,assumption,V65,,,,,,,
+56,Test 56,V56,Vector,TT56,0,1,0,0,0,0,0,0,0,,,,,,,,,,0.001,V56,121,V56,Policy year/quarter
